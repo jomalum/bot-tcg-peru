@@ -5,7 +5,6 @@ from datetime import datetime
 from threading import Thread
 from flask import Flask
 
-# Servidor web falso para que Render no cierre el servicio gratuito
 app = Flask(__name__)
 
 @app.route('/')
@@ -15,7 +14,6 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-# Lógica del Bot Sniper
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 API_CART_URL = "https://www.plazavea.com.pe/api/checkout/pub/orderForm/items"
 SKU_PRODUCTO = "20711641"
@@ -37,6 +35,13 @@ async def enviar_alerta_discord(titulo, descripcion, color):
 
 async def sniper_loop():
     print("🤖 Bot Sniper iniciado en la nube 24/7...")
+    # Alerta de prueba al arrancar
+    await enviar_alerta_discord(
+        "🟡 ¡BOT INICIADO CORRECTAMENTE!", 
+        "El bot se ha conectado a la nube y está monitoreando el stock.", 
+        16776960
+    )
+    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Content-Type": "application/json"
@@ -71,8 +76,6 @@ def iniciar_bot():
     asyncio.run(sniper_loop())
 
 if __name__ == "__main__":
-    # Arrancamos el servidor web en un hilo paralelo
     t = Thread(target=run_web)
     t.start()
-    # Arrancamos el bot sniper
     iniciar_bot()
