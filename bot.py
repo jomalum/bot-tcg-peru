@@ -2,10 +2,23 @@ import os
 import httpx
 import asyncio
 from datetime import datetime
+from threading import Thread
+from flask import Flask
 
+# Servidor web falso para que Render no cierre el servicio gratuito
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot Sniper TCG Activo 24/7"
+
+def run_web():
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
+# Lógica del Bot Sniper
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 API_CART_URL = "https://www.plazavea.com.pe/api/checkout/pub/orderForm/items"
-SKU_PRODUCTO = "20711641" # El código de tu producto
+SKU_PRODUCTO = "20711641"
 
 async def enviar_alerta_discord(titulo, descripcion, color):
     data = {
@@ -54,5 +67,12 @@ async def sniper_loop():
                 
             await asyncio.sleep(15)
 
-if __name__ == "__main__":
+def iniciar_bot():
     asyncio.run(sniper_loop())
+
+if __name__ == "__main__":
+    # Arrancamos el servidor web en un hilo paralelo
+    t = Thread(target=run_web)
+    t.start()
+    # Arrancamos el bot sniper
+    iniciar_bot()
