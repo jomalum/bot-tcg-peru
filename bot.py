@@ -17,7 +17,7 @@ def run_web():
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 # Usamos el endpoint de simulación de stock de VTEX (Plaza Vea)
 API_SIMULATION_URL = "https://www.plazavea.com.pe/api/checkout/pub/orderForm/simulation?sc=1"
-SKU_PRODUCTO = "20711641"
+SKU_PRODUCTO = "20711636"
 
 async def enviar_alerta_discord(titulo, descripcion, color):
     data = {
