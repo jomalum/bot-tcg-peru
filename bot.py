@@ -1,6 +1,7 @@
 import os
 import time
 import httpx
+from threading import Thread
 from flask import Flask
 
 app = Flask(__name__)
@@ -11,22 +12,56 @@ URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
 def enviar_alerta_discord(mensaje):
     try:
-        # Encabezado obligatorio exigido por Discord para evitar el bloqueo de Cloudflare
         headers = {
-            "User-Agent": "DiscordBot (https://discord.com, 1.0)",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Content-Type": "application/json"
         }
         response = httpx.post(WEBHOOK_URL, json={"content": mensaje}, headers=headers, timeout=5)
-        print(f"Respuesta de Discord - Código: {response.status_code} - Texto: {response.text}")
+        print(f"Respuesta de Discord - Código: {response.status_code}")
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-print("🚀 Ejecutando alerta de prueba inicial hacia Discord...")
-enviar_alerta_discord("🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea.")
+def sniper_loop():
+    # Esperamos 30 segundos para que Cloudflare libere cualquier bloqueo previo de IP
+    print("🤖 Bot Sniper en espera de seguridad (30s)...")
+    time.sleep(30)
+    
+    print("🤖 Bot Sniper iniciado y vigilando stock...")
+    enviar_alerta_discord("🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea.")
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    while True:
+        try:
+            with httpx.Client(http2=True, follow_redirects=True) as client:
+                response = client.get(URL_PRODUCTO, headers=headers, timeout=10)
+                print(f"Código HTTP de la tienda: {response.status_code}")
+                
+                if response.status_code == 200:
+                    html_texto = response.text.lower()
+                    if "comprar" in html_texto or "agregar" in html_texto:
+                        if "agotado" not in html_texto and "unavailable" not in html_texto:
+                            print("🚀 ¡POSIBLE STOCK DETECTADO!")
+                            enviar_alerta_discord(
+                                "🟢 **¡ALERTA DE STOCK EN PLAZA VEA!** El producto SKU `" + SKU_PRODUCTO + "` muestra disponibilidad. ¡Corre a revisar la web!"
+                            )
+                            time.sleep(1800)
+                            
+        except Exception as e:
+            print(f"Error en la petición web: {e}")
+            
+        time.sleep(20)
 
 @app.route('/')
 def home():
     return "Bot Sniper TCG Activo 24/7"
 
 if __name__ == "__main__":
+    # Lanzamos el sniper en segundo plano para que Flask levante el servidor web sin problemas
+    t = Thread(target=sniper_loop)
+    t.daemon = True
+    t.start()
+    
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
