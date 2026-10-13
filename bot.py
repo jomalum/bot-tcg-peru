@@ -5,7 +5,6 @@ from datetime import datetime
 from threading import Thread
 from flask import Flask
 
-# Servidor web falso para que Render no cierre el servicio gratuito
 app = Flask(__name__)
 
 @app.route('/')
@@ -15,10 +14,9 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-# Lógica del Bot Sniper (Modo Simulación VTEX)
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
-API_SIMULATION_URL = "https://www.plazavea.com.pe/api/checkout/pub/orderForm/simulation?sc=1"
-SKU_PRODUCTO = "20711636"
+API_CART_URL = "https://www.plazavea.com.pe/api/checkout/pub/orderForm/items"
+SKU_PRODUCTO = "20711641"
 
 async def enviar_alerta_discord(titulo, descripcion, color):
     data = {
@@ -36,56 +34,43 @@ async def enviar_alerta_discord(titulo, descripcion, color):
             print(f"Error enviando a Discord: {e}")
 
 async def sniper_loop():
-    print("🤖 Bot Sniper (Modo Simulación) iniciado en la nube 24/7...")
+    print("🤖 Bot Sniper iniciado en la nube 24/7...")
+    # Alerta de prueba al arrancar
     await enviar_alerta_discord(
-        "🟡 ¡BOT RECONFIGURADO Y ACTIVO!", 
-        f"El sniper está monitoreando el SKU `{SKU_PRODUCTO}` mediante simulación de stock.", 
+        "🟡 ¡BOT INICIADO CORRECTAMENTE!", 
+        "El bot se ha conectado a la nube y está monitoreando el stock.", 
         16776960
     )
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Content-Type": "application/json"
     }
     
     payload = {
-        "items": [{"id": SKU_PRODUCTO, "quantity": 1, "seller": "1"}]
+        "orderItems": [{"id": SKU_PRODUCTO, "quantity": 1, "seller": "1"}]
     }
 
     async with httpx.AsyncClient(http2=True) as client:
         while True:
             try:
-                response = await client.post(API_SIMULATION_URL, json=payload, headers=headers, timeout=5.0)
+                response = await client.post(API_CART_URL, json=payload, headers=headers, timeout=5.0)
                 
                 if response.status_code == 200:
-                    data = response.json()
-                    items_encontrados = data.get("items", [])
-                    
-                    if items_encontrados:
-                        availability = items_encontrados[0].get("availability")
-                        list_price = items_encontrados[0].get("listPrice", 0)
-                        
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] Respuesta OK - Disponibilidad: {availability} - Precio: {list_price}")
-                        
-                        # Si el producto tiene precio o disponibilidad activa
-                        if list_price > 0 or availability:
-                            print("🚀 ¡STOCK DETECTADO!")
-                            await enviar_alerta_discord(
-                                "🟢 ¡STOCK DISPONIBLE DETECTADO!", 
-                                f"El SKU `{SKU_PRODUCTO}` tiene stock activo en Plaza Vea. ¡Corre a comprar!", 
-                                3066993
-                            )
-                            await asyncio.sleep(1800) # Espera 30 min para no spamear
-                    else:
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] Sin stock en la simulación.")
+                    print("🚀 ¡ITEM INYECTADO AL CARRITO!")
+                    await enviar_alerta_discord(
+                        "🟢 ¡PRODUCTO AÑADIDO AL CARRITO!", 
+                        f"El bot interceptó el stock del SKU: `{SKU_PRODUCTO}` y lo cargó con éxito.", 
+                        3066993
+                    )
+                    await asyncio.sleep(3600) 
                 else:
-                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Código HTTP inesperado: {response.status_code}")
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Sin stock (Código: {response.status_code})")
                     
             except Exception as e:
                 print(f"Error en la petición: {e}")
                 
-            await asyncio.sleep(10) # Revisa cada 10 segundos
+            await asyncio.sleep(15)
 
 def iniciar_bot():
     asyncio.run(sniper_loop())
