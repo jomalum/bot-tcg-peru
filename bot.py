@@ -6,6 +6,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
+# Tu Webhook actual y activo
 WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
@@ -22,7 +23,6 @@ def enviar_alerta_discord(mensaje):
         print(f"Error enviando a Discord: {e}")
 
 def sniper_loop():
-    # Esperamos 30 segundos para que Cloudflare libere cualquier bloqueo previo de IP
     print("🤖 Bot Sniper en espera de seguridad (30s)...")
     time.sleep(30)
     
@@ -59,7 +59,6 @@ def home():
     return "Bot Sniper TCG Activo 24/7"
 
 if __name__ == "__main__":
-    # Lanzamos el sniper en segundo plano para que Flask levante el servidor web sin problemas
     t = Thread(target=sniper_loop)
     t.daemon = True
     t.start()
