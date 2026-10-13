@@ -3,7 +3,7 @@ import httpx
 import asyncio
 from datetime import datetime
 from threading import Thread
-from Flask import Flask
+from flask import Flask
 
 app = Flask(__name__)
 
@@ -14,7 +14,7 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-# AQUÍ PEGOS DIRECTAMENTE TU WEBHOOK DE DISCORD ENTRE LAS COMILLAS
+# Pega tu Webhook de Discord aquí entre las comillas
 WEBHOOK_URL = "TU_WEBHOOK_AQUI"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
@@ -38,7 +38,6 @@ async def enviar_alerta_discord(titulo, descripcion, color):
 async def sniper_loop():
     print("🤖 Bot Sniper iniciado...")
     
-    # Esta alerta llegará a tu Discord apenas encienda
     await enviar_alerta_discord(
         "🚨 ¡BOT REINICIADO Y CONECTADO!", 
         f"El sniper está vigilando el producto con SKU: `{SKU_PRODUCTO}`.", 
