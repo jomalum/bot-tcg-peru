@@ -3,9 +3,8 @@ import httpx
 import asyncio
 from datetime import datetime
 from threading import Thread
-from flask import Flask
+from Flask import Flask
 
-# Servidor web para mantener Render activo 24/7
 app = Flask(__name__)
 
 @app.route('/')
@@ -15,17 +14,12 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-# Configuración
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+# AQUÍ PEGOS DIRECTAMENTE TU WEBHOOK DE DISCORD ENTRE LAS COMILLAS
+WEBHOOK_URL = "TU_WEBHOOK_AQUI"
 SKU_PRODUCTO = "20711636"
-# URL directa de la página del producto para comprobar su estado HTTP
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
 async def enviar_alerta_discord(titulo, descripcion, color):
-    if not WEBHOOK_URL:
-        print("❌ Error: WEBHOOK_URL no está configurada en Render.")
-        return
-    
     data = {
         "embeds": [{
             "title": titulo,
@@ -44,7 +38,7 @@ async def enviar_alerta_discord(titulo, descripcion, color):
 async def sniper_loop():
     print("🤖 Bot Sniper iniciado...")
     
-    # ALERTA DE PRUEBA INICIAL: Esto debe llegar a Discord apenas encienda
+    # Esta alerta llegará a tu Discord apenas encienda
     await enviar_alerta_discord(
         "🚨 ¡BOT REINICIADO Y CONECTADO!", 
         f"El sniper está vigilando el producto con SKU: `{SKU_PRODUCTO}`.", 
@@ -58,17 +52,11 @@ async def sniper_loop():
     async with httpx.AsyncClient(http2=True, follow_redirects=True) as client:
         while True:
             try:
-                # Consultamos directamente la página del producto
                 response = await client.get(URL_PRODUCTO, headers=headers, timeout=10.0)
-                
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] Código HTTP de la tienda: {response.status_code}")
                 
-                # Si la página responde OK (200) y no dice que no existe
                 if response.status_code == 200:
-                    # Verificamos si en el texto de la página ya no aparece el botón de agotado o si hay indicios de stock
                     html_texto = response.text.lower()
-                    
-                    # Palabras clave que suelen indicar que está disponible (puedes ajustar esto)
                     if "comprar" in html_texto or "agregar" in html_texto:
                         if "agotado" not in html_texto and "unavailable" not in html_texto:
                             print("🚀 ¡POSIBLE STOCK DETECTADO!")
@@ -77,12 +65,12 @@ async def sniper_loop():
                                 f"El producto `{SKU_PRODUCTO}` muestra botones de compra activos. ¡Revisa rápido la web!", 
                                 3066993
                             )
-                            await asyncio.sleep(1800) # Pausa de 30 min para no spamear
+                            await asyncio.sleep(1800)
                 
             except Exception as e:
                 print(f"Error en la petición web: {e}")
                 
-            await asyncio.sleep(20) # Revisa cada 20 segundos
+            await asyncio.sleep(20)
 
 def iniciar_bot():
     asyncio.run(sniper_loop())
