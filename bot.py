@@ -14,34 +14,27 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-# Configuración con tu Webhook integrado
+# Tu Webhook integrado
 WEBHOOK_URL = "https://discord.com/api/webhooks/1558296831052611716/Qg74kXBmmQOCRI3Vh0PpGm3RKc7mYqifXnHzSz4JtLiDnJqidMfkawxadzOlRYSarNDM"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
-def enviar_alerta_discord(titulo, descripcion, color):
+def enviar_alerta_discord(mensaje):
     data = {
-        "embeds": [{
-            "title": titulo,
-            "description": descripcion,
-            "color": color,
-            "footer": {"text": "Bot Sniper Jomasuss TCG"}
-        }]
+        "content": mensaje
     }
     try:
         response = httpx.post(WEBHOOK_URL, json=data, timeout=5)
-        print(f"Respuesta de Discord: {response.status_code}")
+        print(f"Respuesta de Discord - Código: {response.status_code}, Texto: {response.text}")
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
 def sniper_loop():
     print("🤖 Bot Sniper iniciado correctamente...")
     
-    # Mensaje inicial directo a Discord al arrancar
+    # Mensaje inicial en texto plano directo a Discord al arrancar
     enviar_alerta_discord(
-        "🟡 ¡BOT REINICIADO Y CONECTADO!", 
-        f"El sniper ya está vigilando el producto con SKU: `{SKU_PRODUCTO}` en Plaza Vea.", 
-        16776960
+        "🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea."
     )
     
     headers = {
@@ -60,9 +53,7 @@ def sniper_loop():
                         if "agotado" not in html_texto and "unavailable" not in html_texto:
                             print("🚀 ¡POSIBLE STOCK DETECTADO!")
                             enviar_alerta_discord(
-                                "🟢 ¡ALERTA DE STOCK EN PLAZA VEA!", 
-                                f"El producto SKU `{SKU_PRODUCTO}` muestra disponibilidad. ¡Revisa la web!", 
-                                3066993
+                                "🟢 **¡ALERTA DE STOCK EN PLAZA VEA!** El producto SKU `" + SKU_PRODUCTO + "` muestra disponibilidad. ¡Corre a revisar la web!"
                             )
                             time.sleep(1800) # Pausa de 30 min
                             
