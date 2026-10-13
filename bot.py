@@ -9,7 +9,6 @@ app = Flask(__name__)
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 SKU_PRODUCTO = "20711636"
-# URL completa y oficial de Plaza Vea para evitar errores 404
 URL_PRODUCTO = "https://www.plazavea.com.pe/coleccion-ultra-premium-tcg-30-aniversario-ingles-20711636/p"
 
 def obtener_hora_peru():
@@ -51,7 +50,7 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-# PRUEBA INMEDIATA: Mandará la tarjeta con la URL correcta
+# Prueba inicial para verificar comunicación
 print("🚀 Enviando tarjeta de prueba a Discord...")
 enviar_alerta_discord(
     "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible! (Prueba)**",
@@ -61,7 +60,7 @@ enviar_alerta_discord(
 )
 
 def sniper_loop():
-    print("🤖 Bot Sniper iniciado y vigilando stock de la UPC...")
+    print("🤖 Bot Sniper vigilando estrictamente el botón de agregar activo...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -75,18 +74,30 @@ def sniper_loop():
                 if response.status_code == 200:
                     html_texto = response.text.lower()
                     
-                    tiene_accion_compra = "comprar" in html_texto or "agregar" in html_texto or "añadir" in html_texto
-                    esta_agotado = "agotado" in html_texto or "unavailable" in html_texto or "producto no disponible" in html_texto
+                    # 1. Verificamos que el botón de agregar exista explícitamente como activo
+                    # Buscamos clases típicas de botones habilitados de compra en VTEX o la estructura del botón sin bloqueo
+                    boton_activo = "add-to-cart-button" in html_texto or "buy-button" in html_texto or "agregar" in html_texto
                     
-                    if tiene_accion_compra and not esta_agotado:
-                        print("🚀 ¡POSIBLE STOCK DETECTADO!")
+                    # 2. Buscamos exhaustivamente cualquier indicador de que está agotado o inactivo
+                    esta_deshabilitado = (
+                        "product-unavailable" in html_texto or
+                        "out-of-stock" in html_texto or
+                        "producto agotado" in html_texto or
+                        "unavailable" in html_texto or
+                        'class="add-to-cart-button ausgeschaltet"' in html_texto or
+                        "disabled" in html_texto
+                    )
+                    
+                    # La alerta solo salta si hay indicios de compra activos y CERO estados de agotado
+                    if boton_activo and not esta_deshabilitado:
+                        print("🚀 ¡BOTÓN DE AGREGAR HABILITADO Y STOCK REAL CONFIRMADO!")
                         enviar_alerta_discord(
                             "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible para Compra!**",
-                            f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título o en el enlace de abajo para abrir la tienda al instante.",
+                            f"¡El botón de agregar está habilitado para el producto con SKU **{SKU_PRODUCTO}**! Haz clic en el enlace para comprar antes de que se agote.",
                             3066993,
                             es_embed=True
                         )
-                        time.sleep(1800)
+                        time.sleep(1800) # Pausa de 30 minutos tras una alerta real
                             
         except Exception as e:
             print(f"Error en la petición web: {e}")
