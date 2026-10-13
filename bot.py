@@ -11,6 +11,9 @@ WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = "https://www.plazavea.com.pe/coleccion-ultra-premium-tcg-30-aniversario-ingles-20711636/p"
 
+# Enlace directo de adición automática al carrito por VTEX
+URL_CARRITO_DIRECTO = f"https://www.plazavea.com.pe/checkout/cart/add?sku={SKU_PRODUCTO}&qty=1&seller=1"
+
 def obtener_hora_peru():
     peru_time = datetime.datetime.utcnow() - datetime.timedelta(hours=5)
     return peru_time.strftime("%d/%m %H:%M:%S (Perú)")
@@ -27,18 +30,19 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
                 "content": "@here 🔄 **¡VOLVIÓ EL STOCK!** · Pokémon TCG / Coleccionables",
                 "embeds": [{
                     "title": titulo,
-                    "url": URL_PRODUCTO,
+                    "url": URL_CARRITO_DIRECTO, # El título te lleva directo al carrito con el producto agregado
                     "description": descripcion,
                     "color": color,
                     "fields": [
                         {"name": "📦 Stock", "value": "🟢 Disponible", "inline": True},
                         {"name": "🏬 Tienda", "value": "Plaza Vea", "inline": True},
-                        {"name": "🔗 Enlace Directo", "value": f"[Hacer clic aquí para ir a Plaza Vea]({URL_PRODUCTO})", "inline": False},
+                        {"name": "🛒 Enlace Directo al Carrito", "value": f"[Hacer clic aquí para ir al Carrito con 1 Unidad]({URL_CARRITO_DIRECTO})", "inline": False},
+                        {"name": "🔗 Ver Página del Producto", "value": f"[Ir a la tienda]({URL_PRODUCTO})", "inline": False},
                         {"name": "📋 Código SKU", "value": f"`{SKU_PRODUCTO}`", "inline": True},
                         {"name": "🕒 Detectado", "value": obtener_hora_peru(), "inline": True}
                     ],
                     "footer": {
-                        "text": "Jomasuss TCG Sniper · Stock y precios sujetos a cambios"
+                        "text": "Jomasuss TCG Sniper · Auto-Cart Link"
                     }
                 }]
             }
@@ -50,17 +54,17 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-# Prueba inicial para verificar comunicación
-print("🚀 Enviando tarjeta de prueba a Discord...")
+# PRUEBA INMEDIATA: Mandará la tarjeta de prueba con el enlace directo al carrito
+print("🚀 Enviando tarjeta de prueba a Discord con enlace de carrito...")
 enviar_alerta_discord(
     "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible! (Prueba)**",
-    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título o en el enlace de abajo para abrir la tienda al instante.",
+    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el enlace para agregarlo al carrito de inmediato.",
     3066993,
     es_embed=True
 )
 
 def sniper_loop():
-    print("🤖 Bot Sniper vigilando estrictamente el botón de agregar activo...")
+    print("🤖 Bot Sniper iniciado y vigilando stock (modo enlace directo al carrito)...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -74,26 +78,21 @@ def sniper_loop():
                 if response.status_code == 200:
                     html_texto = response.text.lower()
                     
-                    # 1. Verificamos que el botón de agregar exista explícitamente como activo
-                    # Buscamos clases típicas de botones habilitados de compra en VTEX o la estructura del botón sin bloqueo
-                    boton_activo = "add-to-cart-button" in html_texto or "buy-button" in html_texto or "agregar" in html_texto
-                    
-                    # 2. Buscamos exhaustivamente cualquier indicador de que está agotado o inactivo
+                    # Verificamos que el botón de agregar esté habilitado y sin marcas de agotado
+                    boton_activo = "agregar" in html_texto or "comprar" in html_texto
                     esta_deshabilitado = (
                         "product-unavailable" in html_texto or
                         "out-of-stock" in html_texto or
                         "producto agotado" in html_texto or
                         "unavailable" in html_texto or
-                        'class="add-to-cart-button ausgeschaltet"' in html_texto or
                         "disabled" in html_texto
                     )
                     
-                    # La alerta solo salta si hay indicios de compra activos y CERO estados de agotado
                     if boton_activo and not esta_deshabilitado:
-                        print("🚀 ¡BOTÓN DE AGREGAR HABILITADO Y STOCK REAL CONFIRMADO!")
+                        print("🚀 ¡STOCK REAL Y BOTÓN HABILITADO CONFIRMADO!")
                         enviar_alerta_discord(
                             "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible para Compra!**",
-                            f"¡El botón de agregar está habilitado para el producto con SKU **{SKU_PRODUCTO}**! Haz clic en el enlace para comprar antes de que se agote.",
+                            f"¡El producto con SKU **{SKU_PRODUCTO}** tiene stock activo! Haz clic abajo para añadirlo al carrito al instante.",
                             3066993,
                             es_embed=True
                         )
@@ -106,7 +105,7 @@ def sniper_loop():
 
 @app.route('/')
 def home():
-    return "Bot Sniper TCG Activo 24/7"
+    return "Bot Sniper TCG con Enlace de Carrito Activo 24/7"
 
 if __name__ == "__main__":
     t = Thread(target=sniper_loop)
