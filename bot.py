@@ -25,14 +25,14 @@ def enviar_alerta_discord(mensaje):
     }
     try:
         response = httpx.post(WEBHOOK_URL, json=data, timeout=5)
-        print(f"Respuesta de Discord - Código: {response.status_code}, Texto: {response.text}")
+        print(f"Respuesta de Discord - Código: {response.status_code}")
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
 def sniper_loop():
-    print("🤖 Bot Sniper iniciado correctamente...")
+    print("🤖 Bot Sniper iniciado en el hilo principal...")
     
-    # Mensaje inicial en texto plano directo a Discord al arrancar
+    # Mensaje inicial directo a Discord al arrancar
     enviar_alerta_discord(
         "🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea."
     )
@@ -63,9 +63,10 @@ def sniper_loop():
         time.sleep(20) # Revisa cada 20 segundos
 
 if __name__ == "__main__":
-    # Arrancamos Flask en segundo plano
-    t = Thread(target=run_web)
-    t.start()
+    # 1. Arrancamos Flask en segundo plano para que Render no cierre el servicio
+    web_thread = Thread(target=run_web)
+    web_thread.daemon = True
+    web_thread.start()
     
-    # Ejecutamos el sniper en el hilo principal
+    # 2. Ejecutamos el sniper directamente en el hilo principal
     sniper_loop()
