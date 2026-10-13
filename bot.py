@@ -6,7 +6,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# Tu Webhook actual y activo
+# Tu Webhook oficial y activo de Discord
 WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
@@ -23,8 +23,9 @@ def enviar_alerta_discord(mensaje):
         print(f"Error enviando a Discord: {e}")
 
 def sniper_loop():
-    print("🤖 Bot Sniper en espera de seguridad (30s)...")
-    time.sleep(30)
+    # Pequeña pausa para asegurar estabilidad al arrancar en la nube
+    print("🤖 Bot Sniper en espera de seguridad (20s)...")
+    time.sleep(20)
     
     print("🤖 Bot Sniper iniciado y vigilando stock...")
     enviar_alerta_discord("🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea.")
@@ -47,18 +48,19 @@ def sniper_loop():
                             enviar_alerta_discord(
                                 "🟢 **¡ALERTA DE STOCK EN PLAZA VEA!** El producto SKU `" + SKU_PRODUCTO + "` muestra disponibilidad. ¡Corre a revisar la web!"
                             )
-                            time.sleep(1800)
+                            time.sleep(1800) # Pausa de 30 min si encuentra stock
                             
         except Exception as e:
             print(f"Error en la petición web: {e}")
             
-        time.sleep(20)
+        time.sleep(20) # Revisa cada 20 segundos
 
 @app.route('/')
 def home():
     return "Bot Sniper TCG Activo 24/7"
 
 if __name__ == "__main__":
+    # Arrancamos el sniper en segundo plano para liberar el hilo principal del servidor web
     t = Thread(target=sniper_loop)
     t.daemon = True
     t.start()
