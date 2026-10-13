@@ -8,9 +8,10 @@ from flask import Flask
 app = Flask(__name__)
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
+SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = "https://www.plazavea.com.pe/coleccion-ultra-premium-tcg-30-aniversario-ingles-20711636/p"
-SKU_PRODUCTO = "12603241" # SKU real de la UPC obtenido del código fuente
 
+# Enlace directo de adición automática al carrito por VTEX
 URL_CARRITO_DIRECTO = f"https://www.plazavea.com.pe/checkout/cart/add?sku={SKU_PRODUCTO}&qty=1&seller=1"
 
 def obtener_hora_peru():
@@ -26,22 +27,22 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
         
         if es_embed:
             data = {
-                "content": "@here 🔄 **¡ALERTA DE STOCK - UPC!** · Pokémon TCG",
+                "content": "@here 🔄 **¡VOLVIÓ EL STOCK!** · Pokémon TCG / Coleccionables",
                 "embeds": [{
                     "title": titulo,
-                    "url": URL_CARRITO_DIRECTO,
+                    "url": URL_CARRITO_DIRECTO, # El título te lleva directo al carrito con el producto agregado
                     "description": descripcion,
                     "color": color,
                     "fields": [
                         {"name": "📦 Stock", "value": "🟢 Disponible", "inline": True},
                         {"name": "🏬 Tienda", "value": "Plaza Vea", "inline": True},
-                        {"name": "🛒 Enlace Directo al Carrito", "value": f"[Añadir UPC al Carrito con 1 Clic]({URL_CARRITO_DIRECTO})", "inline": False},
+                        {"name": "🛒 Enlace Directo al Carrito", "value": f"[Hacer clic aquí para ir al Carrito con 1 Unidad]({URL_CARRITO_DIRECTO})", "inline": False},
                         {"name": "🔗 Ver Página del Producto", "value": f"[Ir a la tienda]({URL_PRODUCTO})", "inline": False},
                         {"name": "📋 Código SKU", "value": f"`{SKU_PRODUCTO}`", "inline": True},
                         {"name": "🕒 Detectado", "value": obtener_hora_peru(), "inline": True}
                     ],
                     "footer": {
-                        "text": "Jomasuss TCG Sniper · UPC Correcta"
+                        "text": "Jomasuss TCG Sniper · Auto-Cart Link"
                     }
                 }]
             }
@@ -50,27 +51,20 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
             
         response = httpx.post(WEBHOOK_URL, json=data, headers=headers, timeout=5)
         print(f"Respuesta de Discord - Código: {response.status_code}")
-        
-        # Si Discord nos da rate limit (429), esperamos unos segundos
-        if response.status_code == 429:
-            print("⚠️ Discord rate limit (429) alcanzado. Pausando 5 segundos...")
-            time.sleep(5)
-            
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-# Pausa breve al arrancar para evitar saturar el webhook con el primer despliegue
-time.sleep(3)
-print("🚀 Enviando tarjeta de prueba a Discord con el SKU correcto de la UPC...")
+# PRUEBA INMEDIATA: Mandará la tarjeta de prueba con el enlace directo al carrito
+print("🚀 Enviando tarjeta de prueba a Discord con enlace de carrito...")
 enviar_alerta_discord(
-    "🛒 **Colección Ultra Premium TCG 30 Aniv. — ¡Sistema Activo!**",
-    f"¡El bot se ha conectado correctamente con el SKU real **{SKU_PRODUCTO}**! Vigilando stock en tiempo real.",
+    "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible! (Prueba)**",
+    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el enlace para agregarlo al carrito de inmediato.",
     3066993,
     es_embed=True
 )
 
 def sniper_loop():
-    print("🤖 Bot Sniper vigilando la UPC de la Colección Ultra Premium...")
+    print("🤖 Bot Sniper iniciado y vigilando stock (modo enlace directo al carrito)...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -84,6 +78,7 @@ def sniper_loop():
                 if response.status_code == 200:
                     html_texto = response.text.lower()
                     
+                    # Verificamos que el botón de agregar esté habilitado y sin marcas de agotado
                     boton_activo = "agregar" in html_texto or "comprar" in html_texto
                     esta_deshabilitado = (
                         "product-unavailable" in html_texto or
@@ -94,14 +89,14 @@ def sniper_loop():
                     )
                     
                     if boton_activo and not esta_deshabilitado:
-                        print("🚀 ¡STOCK REAL Y BOTÓN HABILITADO CONFIRMADO PARA LA UPC!")
+                        print("🚀 ¡STOCK REAL Y BOTÓN HABILITADO CONFIRMADO!")
                         enviar_alerta_discord(
-                            "🛒 **Colección Ultra Premium TCG 30 Aniv. — ¡Disponible para Compra!**",
-                            f"¡La UPC con SKU **{SKU_PRODUCTO}** tiene stock activo! Haz clic abajo para añadirla al carrito al instante.",
+                            "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible para Compra!**",
+                            f"¡El producto con SKU **{SKU_PRODUCTO}** tiene stock activo! Haz clic abajo para añadirlo al carrito al instante.",
                             3066993,
                             es_embed=True
                         )
-                        time.sleep(1800)
+                        time.sleep(1800) # Pausa de 30 minutos tras una alerta real
                             
         except Exception as e:
             print(f"Error en la petición web: {e}")
@@ -110,7 +105,7 @@ def sniper_loop():
 
 @app.route('/')
 def home():
-    return "Bot Sniper UPC TCG Activo 24/7"
+    return "Bot Sniper TCG con Enlace de Carrito Activo 24/7"
 
 if __name__ == "__main__":
     t = Thread(target=sniper_loop)
