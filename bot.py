@@ -33,27 +33,14 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
                     "fields": [
                         {"name": "📦 Stock", "value": "🟢 Disponible", "inline": True},
                         {"name": "🏬 Tienda", "value": "Plaza Vea", "inline": True},
-                        {"name": "📋 Código SKU", "value": f"`{SKU_PRODUCTO}`", "inline": False},
-                        {"name": "🕒 Detectado", "value": obtener_hora_peru(), "inline": False}
+                        {"name": "🔗 Enlace Directo", "value": f"[Hacer clic aquí para ir a Plaza Vea]({URL_PRODUCTO})", "inline": False},
+                        {"name": "📋 Código SKU", "value": f"`{SKU_PRODUCTO}`", "inline": True},
+                        {"name": "🕒 Detectado", "value": obtener_hora_peru(), "inline": True}
                     ],
                     "footer": {
                         "text": "Jomasuss TCG Sniper · Stock y precios sujetos a cambios"
                     }
-                }],
-                # Agregamos componentes de botones interactivos directos
-                "components": [
-                    {
-                        "type": 1, # Action Row
-                        "components": [
-                            {
-                                "type": 2, # Botón de enlace
-                                "style": 5, # Estilo enlace (color morado con icono externo)
-                                "label": "Ir a Plaza Vea",
-                                "url": URL_PRODUCTO
-                            }
-                        ]
-                    }
-                ]
+                }]
             }
         else:
             data = {"content": titulo}
@@ -63,11 +50,11 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-# PRUEBA INMEDIATA: Mandará la tarjeta con el botón interactivo de prueba
+# PRUEBA INMEDIATA: Mandará la tarjeta con el enlace directo visible
 print("🚀 Enviando tarjeta de prueba a Discord...")
 enviar_alerta_discord(
     "🛒 **¡Disponible para Compra! (Mensaje de Prueba)**",
-    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el botón inferior para ir directo.",
+    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título o en el enlace de abajo para abrir la tienda al instante.",
     3066993,
     es_embed=True
 )
@@ -87,7 +74,6 @@ def sniper_loop():
                 if response.status_code == 200:
                     html_texto = response.text.lower()
                     
-                    # Filtro de búsqueda optimizado para evitar falsos positivos
                     tiene_accion_compra = "comprar" in html_texto or "agregar" in html_texto or "añadir" in html_texto
                     esta_agotado = "agotado" in html_texto or "unavailable" in html_texto or "producto no disponible" in html_texto
                     
@@ -95,7 +81,7 @@ def sniper_loop():
                         print("🚀 ¡POSIBLE STOCK DETECTADO!")
                         enviar_alerta_discord(
                             "🛒 **¡Disponible para Compra!**",
-                            f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el botón inferior para ir directo.",
+                            f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título o en el enlace de abajo para abrir la tienda al instante.",
                             3066993,
                             es_embed=True
                         )
