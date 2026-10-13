@@ -15,7 +15,7 @@ def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
 # Pega tu Webhook de Discord aquí entre las comillas
-WEBHOOK_URL = "TU_WEBHOOK_AQUI"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1558296831052611716/Qg74kXBmmQOCRI3Vh0PpGm3RKc7mYqifXnHzSz4JtLiDnJqidMfkawxadzOlRYSarNDM"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
