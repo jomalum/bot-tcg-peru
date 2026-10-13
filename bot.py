@@ -1,6 +1,6 @@
 import os
 import time
-import requests
+import httpx
 from threading import Thread
 from flask import Flask
 
@@ -14,16 +14,12 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-# Configuración
+# Configuración con tu Webhook integrado
 WEBHOOK_URL = "https://discord.com/api/webhooks/1558296831052611716/Qg74kXBmmQOCRI3Vh0PpGm3RKc7mYqifXnHzSz4JtLiDnJqidMfkawxadzOlRYSarNDM"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
 def enviar_alerta_discord(titulo, descripcion, color):
-    if not WEBHOOK_URL or WEBHOOK_URL == "TU_WEBHOOK_AQUI":
-        print("❌ Error: Falta configurar el Webhook URL en el código.")
-        return
-    
     data = {
         "embeds": [{
             "title": titulo,
@@ -33,7 +29,7 @@ def enviar_alerta_discord(titulo, descripcion, color):
         }]
     }
     try:
-        response = requests.post(WEBHOOK_URL, json=data, timeout=5)
+        response = httpx.post(WEBHOOK_URL, json=data, timeout=5)
         print(f"Respuesta de Discord: {response.status_code}")
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
@@ -54,21 +50,22 @@ def sniper_loop():
 
     while True:
         try:
-            response = requests.get(URL_PRODUCTO, headers=headers, timeout=10)
-            print(f"Código HTTP de la tienda: {response.status_code}")
-            
-            if response.status_code == 200:
-                html_texto = response.text.lower()
-                if "comprar" in html_texto or "agregar" in html_texto:
-                    if "agotado" not in html_texto and "unavailable" not in html_texto:
-                        print("🚀 ¡POSIBLE STOCK DETECTADO!")
-                        enviar_alerta_discord(
-                            "🟢 ¡ALERTA DE STOCK EN PLAZA VEA!", 
-                            f"El producto SKU `{SKU_PRODUCTO}` muestra disponibilidad. ¡Revisa la web!", 
-                            3066993
-                        )
-                        time.sleep(1800) # Pausa de 30 min
-                        
+            with httpx.Client(http2=True, follow_redirects=True) as client:
+                response = client.get(URL_PRODUCTO, headers=headers, timeout=10)
+                print(f"Código HTTP de la tienda: {response.status_code}")
+                
+                if response.status_code == 200:
+                    html_texto = response.text.lower()
+                    if "comprar" in html_texto or "agregar" in html_texto:
+                        if "agotado" not in html_texto and "unavailable" not in html_texto:
+                            print("🚀 ¡POSIBLE STOCK DETECTADO!")
+                            enviar_alerta_discord(
+                                "🟢 ¡ALERTA DE STOCK EN PLAZA VEA!", 
+                                f"El producto SKU `{SKU_PRODUCTO}` muestra disponibilidad. ¡Revisa la web!", 
+                                3066993
+                            )
+                            time.sleep(1800) # Pausa de 30 min
+                            
         except Exception as e:
             print(f"Error en la petición web: {e}")
             
