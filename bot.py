@@ -7,8 +7,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# Leemos el Webhook de forma segura desde las variables de entorno de Render
-WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
+WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
@@ -17,10 +16,6 @@ def obtener_hora_peru():
     return peru_time.strftime("%d/%m %H:%M:%S (Perú)")
 
 def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
-    if not WEBHOOK_URL:
-        print("❌ ERROR: Falta configurar la variable de entorno DISCORD_WEBHOOK_URL en Render.")
-        return False
-        
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -49,51 +44,22 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
         else:
             data = {"content": titulo}
             
-        response = httpx.post(WEBHOOK_URL, json=data, headers=headers, timeout=15)
-        
-        print(f"Estado HTTP de Discord: {response.status_code}")
-        print(f"Respuesta de Discord: {response.text[:500]}")
-        
-        if response.status_code in (200, 204):
-            print("✅ Mensaje enviado correctamente a Discord")
-            return True
-        else:
-            print("❌ Discord rechazó el mensaje")
-            return False
-            
-    except httpx.TimeoutException:
-        print("❌ Discord no respondió dentro del tiempo límite.")
-    except httpx.RequestError as e:
-        print(f"❌ Error de conexión con Discord: {e}")
+        response = httpx.post(WEBHOOK_URL, json=data, headers=headers, timeout=5)
+        print(f"Respuesta de Discord - Código: {response.status_code}")
     except Exception as e:
-        print(f"❌ Error inesperado: {e}")
-    return False
+        print(f"Error enviando a Discord: {e}")
 
-# Ruta de prueba recomendada para verificar el webhook desde el navegador
-@app.route('/probar-discord')
-def probar_discord():
-    enviado = enviar_alerta_discord(
-        "🧪 **Prueba de conexión exitosa**",
-        "El bot de Plaza Vea se ha comunicado correctamente con el webhook de Discord.",
-        3066993,
-        es_embed=True
-    )
-    if enviado:
-        return "✅ Solicitud aceptada por Discord. Revisa tu canal.", 200
-    return "❌ Error al enviar el mensaje. Revisa los logs de Render.", 500
+# PRUEBA INMEDIATA: Esto mandará la tarjeta de ejemplo a Discord apenas arranques
+print("🚀 Enviando tarjeta de prueba a Discord...")
+enviar_alerta_discord(
+    "🛒 **¡Disponible para Compra! (Mensaje de Prueba)**",
+    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título para ir directo al producto.",
+    3066993,
+    es_embed=True
+)
 
 def sniper_loop():
-    print("🤖 Bot Sniper en espera de seguridad (20s)...")
-    time.sleep(20)
-    
     print("🤖 Bot Sniper iniciado y vigilando stock...")
-    enviar_alerta_discord(
-        "🟡 **¡BOT REINICIADO Y CONECTADO!**", 
-        f"El sniper ya se encuentra vigilando el producto con SKU `{SKU_PRODUCTO}` en Plaza Vea 24/7.", 
-        16776960, 
-        es_embed=False
-    )
-    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -124,7 +90,7 @@ def sniper_loop():
 
 @app.route('/')
 def home():
-    return "Bot Sniper TCG Activo 24/7 - Todo en orden 🚀"
+    return "Bot Sniper TCG Activo 24/7"
 
 if __name__ == "__main__":
     t = Thread(target=sniper_loop)
