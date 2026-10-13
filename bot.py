@@ -4,14 +4,25 @@ import httpx
 from threading import Thread
 from flask import Flask
 
+# Servidor web para mantener Render despierto 24/7
 app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return "Bot Sniper TCG Activo 24/7"
+
+def run_web():
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
+# Tu Webhook integrado
 WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
 def enviar_alerta_discord(mensaje):
-    data = {"content": mensaje}
+    data = {
+        "content": mensaje
+    }
     try:
         response = httpx.post(WEBHOOK_URL, json=data, timeout=5)
         print(f"Respuesta de Discord - Código: {response.status_code}")
@@ -19,10 +30,9 @@ def enviar_alerta_discord(mensaje):
         print(f"Error enviando a Discord: {e}")
 
 def sniper_loop():
-    print("🤖 Bot Sniper iniciado en segundo plano...")
-    time.sleep(3) # Pausa breve para asegurar que el sistema esté listo
+    print("🤖 Bot Sniper iniciado en el hilo principal...")
     
-    # Mensaje inicial directo a tu Discord al arrancar
+    # Mensaje inicial directo a Discord al arrancar
     enviar_alerta_discord(
         "🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea."
     )
@@ -45,26 +55,18 @@ def sniper_loop():
                             enviar_alerta_discord(
                                 "🟢 **¡ALERTA DE STOCK EN PLAZA VEA!** El producto SKU `" + SKU_PRODUCTO + "` muestra disponibilidad. ¡Corre a revisar la web!"
                             )
-                            time.sleep(1800)
+                            time.sleep(1800) # Pausa de 30 min
                             
         except Exception as e:
             print(f"Error en la petición web: {e}")
             
-        time.sleep(20)
-
-@app.route('/')
-def home():
-    return "Bot Sniper TCG Activo 24/7"
-
-# Arrancamos el hilo del sniper automáticamente al iniciar la app
-@app.before_first_request_experimental if hasattr(app, 'before_first_request_experimental') else lambda: None
-def iniciar_hilo_segundo_plano():
-    pass
+        time.sleep(20) # Revisa cada 20 segundos
 
 if __name__ == "__main__":
-    # Lanzamos el sniper en un hilo daemon antes de correr Flask
-    t = Thread(target=sniper_loop)
-    t.daemon = True
-    t.start()
+    # 1. Arrancamos Flask en segundo plano para que Render no cierre el servicio
+    web_thread = Thread(target=run_web)
+    web_thread.daemon = True
+    web_thread.start()
     
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    # 2. Ejecutamos el sniper directamente en el hilo principal
+    sniper_loop()
