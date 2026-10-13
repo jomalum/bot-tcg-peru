@@ -5,6 +5,7 @@ from datetime import datetime
 from threading import Thread
 from flask import Flask
 
+# Servidor web falso para que Render no cierre el servicio gratuito
 app = Flask(__name__)
 
 @app.route('/')
@@ -14,8 +15,8 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
+# Lógica del Bot Sniper (Modo Simulación VTEX)
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
-# Usamos el endpoint de simulación de stock de VTEX (Plaza Vea)
 API_SIMULATION_URL = "https://www.plazavea.com.pe/api/checkout/pub/orderForm/simulation?sc=1"
 SKU_PRODUCTO = "20711636"
 
@@ -37,8 +38,8 @@ async def enviar_alerta_discord(titulo, descripcion, color):
 async def sniper_loop():
     print("🤖 Bot Sniper (Modo Simulación) iniciado en la nube 24/7...")
     await enviar_alerta_discord(
-        "🟡 ¡BOT RECONFIGURADO!", 
-        f"El sniper ahora monitorea el SKU `{SKU_PRODUCTO}` mediante simulación de stock.", 
+        "🟡 ¡BOT RECONFIGURADO Y ACTIVO!", 
+        f"El sniper está monitoreando el SKU `{SKU_PRODUCTO}` mediante simulación de stock.", 
         16776960
     )
     
@@ -62,14 +63,12 @@ async def sniper_loop():
                     items_encontrados = data.get("items", [])
                     
                     if items_encontrados:
-                        # Verificamos si la disponibilidad es mayor a 0
-                        # En VTEX, si hay stock, suele retornar el precio y disponibilidad
                         availability = items_encontrados[0].get("availability")
                         list_price = items_encontrados[0].get("listPrice", 0)
                         
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] Respuesta OK - Disponibilidad: {availability}")
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] Respuesta OK - Disponibilidad: {availability} - Precio: {list_price}")
                         
-                        # Si el producto tiene stock (en VTEX suele venir como "available" o con precio > 0)
+                        # Si el producto tiene precio o disponibilidad activa
                         if list_price > 0 or availability:
                             print("🚀 ¡STOCK DETECTADO!")
                             await enviar_alerta_discord(
