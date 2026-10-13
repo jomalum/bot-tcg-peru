@@ -39,7 +39,21 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
                     "footer": {
                         "text": "Jomasuss TCG Sniper · Stock y precios sujetos a cambios"
                     }
-                }]
+                }],
+                # Agregamos componentes de botones interactivos directos
+                "components": [
+                    {
+                        "type": 1, # Action Row
+                        "components": [
+                            {
+                                "type": 2, # Botón de enlace
+                                "style": 5, # Estilo enlace (color morado con icono externo)
+                                "label": "Ir a Plaza Vea",
+                                "url": URL_PRODUCTO
+                            }
+                        ]
+                    }
+                ]
             }
         else:
             data = {"content": titulo}
@@ -49,11 +63,11 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-# PRUEBA INMEDIATA: Esto mandará la tarjeta de ejemplo a Discord apenas arranques
+# PRUEBA INMEDIATA: Mandará la tarjeta con el botón interactivo de prueba
 print("🚀 Enviando tarjeta de prueba a Discord...")
 enviar_alerta_discord(
     "🛒 **¡Disponible para Compra! (Mensaje de Prueba)**",
-    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título para ir directo al producto.",
+    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el botón inferior para ir directo.",
     3066993,
     es_embed=True
 )
@@ -72,16 +86,20 @@ def sniper_loop():
                 
                 if response.status_code == 200:
                     html_texto = response.text.lower()
-                    if "comprar" in html_texto or "agregar" in html_texto:
-                        if "agotado" not in html_texto and "unavailable" not in html_texto:
-                            print("🚀 ¡POSIBLE STOCK DETECTADO!")
-                            enviar_alerta_discord(
-                                "🛒 **¡Disponible para Compra!**",
-                                f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título para ir directo al producto.",
-                                3066993,
-                                es_embed=True
-                            )
-                            time.sleep(1800)
+                    
+                    # Filtro de búsqueda optimizado para evitar falsos positivos
+                    tiene_accion_compra = "comprar" in html_texto or "agregar" in html_texto or "añadir" in html_texto
+                    esta_agotado = "agotado" in html_texto or "unavailable" in html_texto or "producto no disponible" in html_texto
+                    
+                    if tiene_accion_compra and not esta_agotado:
+                        print("🚀 ¡POSIBLE STOCK DETECTADO!")
+                        enviar_alerta_discord(
+                            "🛒 **¡Disponible para Compra!**",
+                            f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el botón inferior para ir directo.",
+                            3066993,
+                            es_embed=True
+                        )
+                        time.sleep(1800)
                             
         except Exception as e:
             print(f"Error en la petición web: {e}")
