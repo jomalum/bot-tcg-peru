@@ -9,7 +9,8 @@ app = Flask(__name__)
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 SKU_PRODUCTO = "20711636"
-URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
+# URL completa y oficial de Plaza Vea para evitar errores 404
+URL_PRODUCTO = "https://www.plazavea.com.pe/coleccion-ultra-premium-tcg-30-aniversario-ingles-20711636/p"
 
 def obtener_hora_peru():
     peru_time = datetime.datetime.utcnow() - datetime.timedelta(hours=5)
@@ -50,17 +51,17 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-# PRUEBA INMEDIATA: Mandará la tarjeta con el enlace directo visible
+# PRUEBA INMEDIATA: Mandará la tarjeta con la URL correcta
 print("🚀 Enviando tarjeta de prueba a Discord...")
 enviar_alerta_discord(
-    "🛒 **¡Disponible para Compra! (Mensaje de Prueba)**",
+    "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible! (Prueba)**",
     f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título o en el enlace de abajo para abrir la tienda al instante.",
     3066993,
     es_embed=True
 )
 
 def sniper_loop():
-    print("🤖 Bot Sniper iniciado y vigilando stock...")
+    print("🤖 Bot Sniper iniciado y vigilando stock de la UPC...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -80,7 +81,7 @@ def sniper_loop():
                     if tiene_accion_compra and not esta_agotado:
                         print("🚀 ¡POSIBLE STOCK DETECTADO!")
                         enviar_alerta_discord(
-                            "🛒 **¡Disponible para Compra!**",
+                            "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible para Compra!**",
                             f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título o en el enlace de abajo para abrir la tienda al instante.",
                             3066993,
                             es_embed=True
