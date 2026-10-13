@@ -11,7 +11,7 @@ WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = "https://www.plazavea.com.pe/coleccion-ultra-premium-tcg-30-aniversario-ingles-20711636/p"
 
-# Enlace directo de adición automática al carrito por VTEX
+# Enlace directo corregido para añadir exactamente el SKU del Álbum Coleccionable
 URL_CARRITO_DIRECTO = f"https://www.plazavea.com.pe/checkout/cart/add?sku={SKU_PRODUCTO}&qty=1&seller=1"
 
 def obtener_hora_peru():
@@ -30,7 +30,7 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
                 "content": "@here 🔄 **¡VOLVIÓ EL STOCK!** · Pokémon TCG / Coleccionables",
                 "embeds": [{
                     "title": titulo,
-                    "url": URL_CARRITO_DIRECTO, # El título te lleva directo al carrito con el producto agregado
+                    "url": URL_CARRITO_DIRECTO,
                     "description": descripcion,
                     "color": color,
                     "fields": [
@@ -54,17 +54,17 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
-# PRUEBA INMEDIATA: Mandará la tarjeta de prueba con el enlace directo al carrito
-print("🚀 Enviando tarjeta de prueba a Discord con enlace de carrito...")
+# PRUEBA INMEDIATA: Mandará la tarjeta de prueba con el enlace directo al carrito correcto
+print("🚀 Enviando tarjeta de prueba a Discord con enlace de carrito corregido...")
 enviar_alerta_discord(
-    "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible! (Prueba)**",
+    "🛒 **Álbum Coleccionable TCG 30 Aniversario — ¡Disponible! (Prueba)**",
     f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el enlace para agregarlo al carrito de inmediato.",
     3066993,
     es_embed=True
 )
 
 def sniper_loop():
-    print("🤖 Bot Sniper iniciado y vigilando stock (modo enlace directo al carrito)...")
+    print("🤖 Bot Sniper iniciado y vigilando stock (Álbum Coleccionable)...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -78,7 +78,6 @@ def sniper_loop():
                 if response.status_code == 200:
                     html_texto = response.text.lower()
                     
-                    # Verificamos que el botón de agregar esté habilitado y sin marcas de agotado
                     boton_activo = "agregar" in html_texto or "comprar" in html_texto
                     esta_deshabilitado = (
                         "product-unavailable" in html_texto or
@@ -91,12 +90,12 @@ def sniper_loop():
                     if boton_activo and not esta_deshabilitado:
                         print("🚀 ¡STOCK REAL Y BOTÓN HABILITADO CONFIRMADO!")
                         enviar_alerta_discord(
-                            "🛒 **Pokémon TCG 30 Aniversario UPC — ¡Disponible para Compra!**",
+                            "🛒 **Álbum Coleccionable TCG 30 Aniversario — ¡Disponible para Compra!**",
                             f"¡El producto con SKU **{SKU_PRODUCTO}** tiene stock activo! Haz clic abajo para añadirlo al carrito al instante.",
                             3066993,
                             es_embed=True
                         )
-                        time.sleep(1800) # Pausa de 30 minutos tras una alerta real
+                        time.sleep(1800)
                             
         except Exception as e:
             print(f"Error en la petición web: {e}")
