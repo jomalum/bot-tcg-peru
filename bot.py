@@ -14,8 +14,8 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-# Tu Webhook integrado
-WEBHOOK_URL = "https://discord.com/api/webhooks/1558296831052611716/Qg74kXBmmQOCRI3Vh0PpGm3RKc7mYqifXnHzSz4JtLiDnJqidMfkawxadzOlRYSarNDM"
+# Tu nuevo Webhook privado integrado
+WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
@@ -32,7 +32,7 @@ def enviar_alerta_discord(mensaje):
 def sniper_loop():
     print("🤖 Bot Sniper iniciado en el hilo principal...")
     
-    # Mensaje inicial directo a Discord al arrancar
+    # Mensaje inicial directo a tu Discord al arrancar
     enviar_alerta_discord(
         "🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea."
     )
@@ -63,10 +63,8 @@ def sniper_loop():
         time.sleep(20) # Revisa cada 20 segundos
 
 if __name__ == "__main__":
-    # 1. Arrancamos Flask en segundo plano para que Render no cierre el servicio
     web_thread = Thread(target=run_web)
     web_thread.daemon = True
     web_thread.start()
     
-    # 2. Ejecutamos el sniper directamente en el hilo principal
     sniper_loop()
