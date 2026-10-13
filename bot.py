@@ -5,6 +5,7 @@ from datetime import datetime
 from threading import Thread
 from flask import Flask
 
+# Servidor web para mantener Render activo 24/7
 app = Flask(__name__)
 
 @app.route('/')
@@ -14,63 +15,74 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
+# Configuración
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
-API_CART_URL = "https://www.plazavea.com.pe/api/checkout/pub/orderForm/items"
-SKU_PRODUCTO = "20711641"
+SKU_PRODUCTO = "20711636"
+# URL directa de la página del producto para comprobar su estado HTTP
+URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
 async def enviar_alerta_discord(titulo, descripcion, color):
+    if not WEBHOOK_URL:
+        print("❌ Error: WEBHOOK_URL no está configurada en Render.")
+        return
+    
     data = {
         "embeds": [{
             "title": titulo,
             "description": descripcion,
             "color": color,
-            "footer": {"text": f"Detectado: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} (Perú)"}
+            "footer": {"text": f"Hora Perú: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"}
         }]
     }
     async with httpx.AsyncClient() as client:
         try:
-            await client.post(WEBHOOK_URL, json=data)
+            response = await client.post(WEBHOOK_URL, json=data)
+            print(f"Respuesta de Discord: {response.status_code}")
         except Exception as e:
             print(f"Error enviando a Discord: {e}")
 
 async def sniper_loop():
-    print("🤖 Bot Sniper iniciado en la nube 24/7...")
-    # Alerta de prueba al arrancar
+    print("🤖 Bot Sniper iniciado...")
+    
+    # ALERTA DE PRUEBA INICIAL: Esto debe llegar a Discord apenas encienda
     await enviar_alerta_discord(
-        "🟡 ¡BOT INICIADO CORRECTAMENTE!", 
-        "El bot se ha conectado a la nube y está monitoreando el stock.", 
+        "🚨 ¡BOT REINICIADO Y CONECTADO!", 
+        f"El sniper está vigilando el producto con SKU: `{SKU_PRODUCTO}`.", 
         16776960
     )
     
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-        "orderItems": [{"id": SKU_PRODUCTO, "quantity": 1, "seller": "1"}]
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
-    async with httpx.AsyncClient(http2=True) as client:
+    async with httpx.AsyncClient(http2=True, follow_redirects=True) as client:
         while True:
             try:
-                response = await client.post(API_CART_URL, json=payload, headers=headers, timeout=5.0)
+                # Consultamos directamente la página del producto
+                response = await client.get(URL_PRODUCTO, headers=headers, timeout=10.0)
                 
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Código HTTP de la tienda: {response.status_code}")
+                
+                # Si la página responde OK (200) y no dice que no existe
                 if response.status_code == 200:
-                    print("🚀 ¡ITEM INYECTADO AL CARRITO!")
-                    await enviar_alerta_discord(
-                        "🟢 ¡PRODUCTO AÑADIDO AL CARRITO!", 
-                        f"El bot interceptó el stock del SKU: `{SKU_PRODUCTO}` y lo cargó con éxito.", 
-                        3066993
-                    )
-                    await asyncio.sleep(3600) 
-                else:
-                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Sin stock (Código: {response.status_code})")
+                    # Verificamos si en el texto de la página ya no aparece el botón de agotado o si hay indicios de stock
+                    html_texto = response.text.lower()
                     
-            except Exception as e:
-                print(f"Error en la petición: {e}")
+                    # Palabras clave que suelen indicar que está disponible (puedes ajustar esto)
+                    if "comprar" in html_texto or "agregar" in html_texto:
+                        if "agotado" not in html_texto and "unavailable" not in html_texto:
+                            print("🚀 ¡POSIBLE STOCK DETECTADO!")
+                            await enviar_alerta_discord(
+                                "🟢 ¡ALERTA DE STOCK EN PLAZA VEA!", 
+                                f"El producto `{SKU_PRODUCTO}` muestra botones de compra activos. ¡Revisa rápido la web!", 
+                                3066993
+                            )
+                            await asyncio.sleep(1800) # Pausa de 30 min para no spamear
                 
-            await asyncio.sleep(15)
+            except Exception as e:
+                print(f"Error en la petición web: {e}")
+                
+            await asyncio.sleep(20) # Revisa cada 20 segundos
 
 def iniciar_bot():
     asyncio.run(sniper_loop())
