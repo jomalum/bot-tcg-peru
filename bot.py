@@ -11,10 +11,10 @@ SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
 def enviar_alerta_discord(mensaje):
-    data = {"content": mensaje}
     try:
-        response = httpx.post(WEBHOOK_URL, json=data, timeout=5)
-        print(f"Respuesta de Discord - Código: {response.status_code}")
+        # Usamos parámetros planos y directos
+        response = httpx.post(WEBHOOK_URL, data={"content": mensaje}, timeout=5)
+        print(f"Respuesta de Discord - Código: {response.status_code} - Contenido: {response.text}")
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
@@ -22,9 +22,8 @@ def sniper_loop():
     print("🤖 Bot Sniper iniciado en segundo plano...")
     time.sleep(3)
     
-    enviar_alerta_discord(
-        "🟡 **¡BOT REINICIADO Y CONECTADO!** El sniper ya está vigilando el SKU: `" + SKU_PRODUCTO + "` en Plaza Vea."
-    )
+    # Mensaje de prueba directo al arrancar
+    enviar_alerta_discord("¡Hola! El bot sniper de Jomasuss TCG se ha conectado correctamente.")
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -41,9 +40,7 @@ def sniper_loop():
                     if "comprar" in html_texto or "agregar" in html_texto:
                         if "agotado" not in html_texto and "unavailable" not in html_texto:
                             print("🚀 ¡POSIBLE STOCK DETECTADO!")
-                            enviar_alerta_discord(
-                                "🟢 **¡ALERTA DE STOCK EN PLAZA VEA!** El producto SKU `" + SKU_PRODUCTO + "` muestra disponibilidad. ¡Corre a revisar la web!"
-                            )
+                            enviar_alerta_discord(f"¡ATENCIÓN! El producto SKU {SKU_PRODUCTO} muestra disponibilidad en Plaza Vea.")
                             time.sleep(1800)
                             
         except Exception as e:
