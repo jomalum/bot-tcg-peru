@@ -12,7 +12,6 @@ SKU_PRODUCTO = "20711636"
 URL_PRODUCTO = f"https://www.plazavea.com.pe/{SKU_PRODUCTO}/p"
 
 def obtener_hora_peru():
-    # Calcula la hora actual en Perú (UTC-5)
     peru_time = datetime.datetime.utcnow() - datetime.timedelta(hours=5)
     return peru_time.strftime("%d/%m %H:%M:%S (Perú)")
 
@@ -50,18 +49,17 @@ def enviar_alerta_discord(titulo, descripcion, color, es_embed=True):
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
+# PRUEBA INMEDIATA: Esto mandará la tarjeta de ejemplo a Discord apenas arranques
+print("🚀 Enviando tarjeta de prueba a Discord...")
+enviar_alerta_discord(
+    "🛒 **¡Disponible para Compra! (Mensaje de Prueba)**",
+    f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título para ir directo al producto.",
+    3066993,
+    es_embed=True
+)
+
 def sniper_loop():
-    print("🤖 Bot Sniper en espera de seguridad (20s)...")
-    time.sleep(20)
-    
     print("🤖 Bot Sniper iniciado y vigilando stock...")
-    enviar_alerta_discord(
-        "🟡 **¡BOT REINICIADO Y CONECTADO!**", 
-        f"El sniper ya se encuentra vigilando el producto con SKU `{SKU_PRODUCTO}` en Plaza Vea 24/7.", 
-        16776960, 
-        es_embed=False
-    )
-    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -80,15 +78,15 @@ def sniper_loop():
                             enviar_alerta_discord(
                                 "🛒 **¡Disponible para Compra!**",
                                 f"¡El producto con SKU **{SKU_PRODUCTO}** ha vuelto a tener stock en Plaza Vea! Haz clic en el título para ir directo al producto.",
-                                3066993, # Color verde brillante estilo tarjeta
+                                3066993,
                                 es_embed=True
                             )
-                            time.sleep(1800) # Pausa de 30 minutos tras una alerta
+                            time.sleep(1800)
                             
         except Exception as e:
             print(f"Error en la petición web: {e}")
             
-        time.sleep(20) # Revisa cada 20 segundos
+        time.sleep(20)
 
 @app.route('/')
 def home():
