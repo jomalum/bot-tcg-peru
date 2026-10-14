@@ -20,7 +20,7 @@ WEBHOOK_URL = "https://discord.com/api/webhooks/1560021358166024302/oPYRwURN2Sq_
 
 
 
-# Lista de productos vigilados con sus SKUs reales y URLs exactas
+# Lista de productos vigilados con sus SKUs reales y URLs exacta
 
 PRODUCTOS = [
 
