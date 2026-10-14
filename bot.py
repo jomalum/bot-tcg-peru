@@ -9,7 +9,6 @@ app = Flask(__name__)
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
 
-# Lista de productos a vigilar (URL, nombre y SKU real de inventario)
 PRODUCTOS = [
     {
         "nombre": "Colección Ultra Premium TCG 30 Aniv. (UPC)",
@@ -41,7 +40,7 @@ def enviar_alerta_discord(prod_nombre, prod_url, prod_sku, color):
             "embeds": [{
                 "title": f"🛒 {prod_nombre}",
                 "url": url_carrito_directo,
-                "description": f"¡El producto **{prod_nombre}** tiene stock activo! Haz clic en el título o enlace para agregarlo al carrito de inmediato.",
+                "description": f"¡El producto **{prod_nombre}** tiene stock activo! Haz clic para agregarlo al carrito.",
                 "color": color,
                 "fields": [
                     {"name": "📦 Stock", "value": "🟢 Disponible", "inline": True},
@@ -59,23 +58,9 @@ def enviar_alerta_discord(prod_nombre, prod_url, prod_sku, color):
             
         response = httpx.post(WEBHOOK_URL, json=data, headers=headers, timeout=5)
         print(f"Respuesta de Discord ({prod_nombre}) - Código: {response.status_code}")
-        
-        if response.status_code == 429:
-            print("⚠️ Discord rate limit (429). Pausando 5 segundos...")
-            time.sleep(5)
             
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
-
-# Prueba de arranque
-time.sleep(3)
-print("🚀 Enviando tarjeta de prueba multi-producto a Discord...")
-enviar_alerta_discord(
-    "Sistema Multi-Sniper TCG Activo",
-    "https://www.plazavea.com.pe",
-    "000000",
-    3066993
-)
 
 def sniper_loop():
     print("🤖 Bot Multi-Sniper vigilando la lista de productos...")
@@ -92,7 +77,6 @@ def sniper_loop():
                     
                     if response.status_code == 200:
                         html_texto = response.text.lower()
-                        
                         boton_activo = "agregar" in html_texto or "comprar" in html_texto
                         esta_deshabilitado = (
                             "product-unavailable" in html_texto or
@@ -105,14 +89,14 @@ def sniper_loop():
                         if boton_activo and not esta_deshabilitado:
                             print(f"🚀 ¡STOCK DETECTADO PARA: {prod['nombre']}!")
                             enviar_alerta_discord(prod["nombre"], prod["url"], prod["sku"], 3066993)
-                            time.sleep(300) # Pausa específica para este producto si hay stock
+                            time.sleep(1800)
                             
             except Exception as e:
                 print(f"Error revisando {prod['nombre']}: {e}")
                 
-            time.sleep(10) # Breve pausa entre cada producto para no saturar
+            time.sleep(10)
             
-        time.sleep(15) # Pausa antes de repetir la ronda completa
+        time.sleep(15)
 
 @app.route('/')
 def home():
