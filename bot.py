@@ -64,11 +64,24 @@ def enviar_alerta_discord(prod_nombre, prod_url, prod_sku, color):
             
         response = httpx.post(WEBHOOK_URL, json=data, headers=headers, timeout=5)
         print(f"Respuesta de Discord ({prod_nombre}) - Código: {response.status_code}")
+        
+        if response.status_code == 429:
+            print("⚠️ Discord rate limit (429) alcanzado. Pausando 5 segundos...")
+            time.sleep(5)
                 
     except Exception as e:
         print(f"Error enviando a Discord: {e}")
 
 def sniper_loop():
+    # Mensaje de prueba inicial para verificar el webhook privado al arrancar
+    print("🚀 Enviando mensaje de prueba al webhook privado...")
+    enviar_alerta_discord(
+        "Sistema Multi-Sniper TCG Activo (Prueba)",
+        "https://www.plazavea.com.pe",
+        "12603241",
+        3066993
+    )
+    
     print("🤖 Bot Multi-Sniper vigilando la lista de productos...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
