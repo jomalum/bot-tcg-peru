@@ -7,7 +7,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
-WEBHOOK_URL = "https://discord.com/api/webhooks/1559386997674737814/H_KhSDuWmEhp9KqHDpHKJ3zSgG1z3gSQfDrh7RO720uCydDd-7aCig6_a1_-lVC39W_h"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1559964321159577672/Li-iYB_PEBIgRXdzQSOSCA2DGXXzFcKNdEy4DR-GUy5_miGayawy52ueIgpMYr5jngTo"
 
 # Lista de productos vigilados con sus SKUs reales y URLs exactas
 PRODUCTOS = [
