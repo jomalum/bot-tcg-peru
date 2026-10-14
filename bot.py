@@ -17,7 +17,7 @@ PRODUCTOS = [
         "sku": "12603241"
     },
     {
-        "nombre": "Álbum Coleccionable TCG 30 Aniversario Inglés",
+        "nombre": "Álbum Coleccionable TCG 30 Aniversario Ingles",
         "url": "https://www.plazavea.com.pe/album-coleccionable-tcg-30-aniversario-ingles-20711641/p",
         "sku": "12603174"
     },
